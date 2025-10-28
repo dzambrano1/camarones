@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nitrite DataTable Test</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Nitrite DataTable Debug Test</h1>
+        <div id="loading">Loading...</div>
+        <div id="error" style="color: red; display: none;"></div>
+        
+        <table id="debugTable" class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Pond ID</th>
+                    <th>Nitrite (mg/L)</th>
+                    <th>Source</th>
+                    <th>Phase</th>
+                    <th>Product</th>
+                    <th>Timestamp</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    
+    <script>
+    $(document).ready(function() {
+        console.log("Starting debug test...");
+        
+        // Test API first
+        $.ajax({
+            url: "get_water_nitrite_data.php",
+            type: "GET",
+            dataType: "json",
+            success: function(response) {
+                console.log("Direct API test:", response);
+                $("#loading").text("API Response: " + (response.success ? "Success" : "Failed"));
+                
+                if (response.success && response.records) {
+                    $("#loading").text("API returned " + response.records.length + " records");
+                    
+                    // Now initialize DataTable
+                    var table = $("#debugTable").DataTable({
+                        data: response.records,
+                        columns: [
+                            { data: "id" },
+                            { data: "pond_id" },
+                            { data: "nitrite_mg_l" },
+                            { data: "source" },
+                            { data: "phase" },
+                            { data: "product" },
+                            { data: "timestamp" }
+                        ],
+                        initComplete: function() {
+                            console.log("DataTable initialized with", this.api().rows().count(), "rows");
+                            $("#loading").text("DataTable loaded with " + this.api().rows().count() + " rows");
+                        }
+                    });
+                } else {
+                    $("#error").show().text("API Error: " + (response.message || "Unknown error"));
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error("API Error:", error);
+                $("#error").show().text("Connection Error: " + error);
+            }
+        });
+    });
+    </script>
+</body>
+</html>
